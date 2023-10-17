@@ -1,43 +1,123 @@
+
 const getState = ({ getStore, getActions, setStore }) => {
 	return {
-		store: {
-			demo: [
-				{
-					title: "FIRST",
-					background: "white",
-					initial: "white"
-				},
-				{
-					title: "SECOND",
-					background: "white",
-					initial: "white"
-				}
-			]
+		store: {			
+			contacts: [],			
 		},
 		actions: {
-			// Use getActions to call a function within a fuction
-			exampleFunction: () => {
-				getActions().changeColor(0, "green");
+			// Use getActions to call a function within a fuction		
+			getContacts: () => {
+				const url = "https://playground.4geeks.com/apis/fake/contact/agenda/dn";
+				fetch(url, {
+					method: "Get"					
+				})
+				.then(resp => {
+					console.log(resp.ok); // will be true if the response is successfull
+					console.log(resp.status); // the status code = 200 or code = 400 etc.
+					//console.log(resp.text()); // will try return the exact result as string
+					return resp.json(); // (returns promise) will try to parse the result as json as return a promise that you can .then for results
+				})
+				.then(data => {
+					setStore({contacts: data});
+					
+				})
+				.catch(error => {
+					//error handling
+					console.log(error);
+				})
 			},
-			loadSomeData: () => {
-				/**
-					fetch().then().then(data => setStore({ "foo": data.bar }))
-				*/
+			addContact: (contact, navigate) => {				
+				const url = "https://playground.4geeks.com/apis/fake/contact/";
+				 fetch(url, {
+					method: "Post",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({						
+						"full_name": contact.full_name,
+                      	"email": contact.email,
+                      	"agenda_slug": "dn",
+                      	"address": contact.address,
+                      	"phone": contact.phone
+					})					
+				})
+				.then(resp => {
+					console.log(resp.ok); // will be true if the response is successfull
+					console.log(resp.status); // the status code = 200 or code = 400 etc.					
+					return resp.json(); // (returns promise) will try to parse the result as json as return a promise that you can .then for results
+				})
+				.then(data => {					
+					getActions().getContacts();
+					
+				})
+				.catch(error => {
+					//error handling
+					console.log(error);
+				})								
+				navigate("/");				
 			},
-			changeColor: (index, color) => {
-				//get the store
-				const store = getStore();
+			editContact:  (contact,navigate) => {
+				let store = getStore();
+				const url = `https://playground.4geeks.com/apis/fake/contact/${contact.id}`;
+				fetch(url, {
+					method: "Put",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({						
+						"full_name": contact.full_name,
+                      	"email": contact.email,
+                      	"agenda_slug": "dn",
+                      	"address": contact.address,
+                      	"phone": contact.phone
+					})					
+				})
+				.then(resp => {
+					console.log(resp.ok); // will be true if the response is successfull
+					console.log(resp.status); // the status code = 200 or code = 400 etc.
+					//console.log(resp.text()); // will try return the exact result as string
+					return resp.json(); // (returns promise) will try to parse the result as json as return a promise that you can .then for results
+				})
+				.then(data => {
+					//console.log(data);
+					let updatedContact = store.contacts.find((item) => {
+						return item.id == contact.id;
 
-				//we have to loop the entire demo array to look for the respective index
-				//and change its color
-				const demo = store.demo.map((elm, i) => {
-					if (i === index) elm.background = color;
-					return elm;
-				});
-
-				//reset the global store
-				setStore({ demo: demo });
-			}
+					});
+					updatedContact.full_name = contact.full_name;
+					updatedContact.email = contact.email;
+					updatedContact.address = contact.address;
+					updatedContact.phone = contact.phone;
+					let newContact = [...store.contacts];
+					setStore({contacts: newContact});
+					
+				})
+				.catch(error => {
+					//error handling
+					console.log(error);
+				})						
+				navigate("/");
+			},
+			deleteContact: (contact) => {
+				let store = getStore();
+				const url = `https://playground.4geeks.com/apis/fake/contact/${contact}`;
+				fetch(url, {
+					method: "Delete"					
+				})
+				.then(resp => {
+					console.log(resp.ok); // will be true if the response is successfull
+					console.log(resp.status); // the status code = 200 or code = 400 etc.
+				})
+				.then(data => {					
+					let val = store.contacts.filter((item) => item.id != contact);
+					setStore({contacts: val});
+				})
+				.catch(error => {
+					//error handling
+					console.log(error);
+				})											
+				
+			}			
 		}
 	};
 };
